@@ -65,18 +65,22 @@ export default function Home() {
     setInventory(inventoryList);
   };
 
-  const addItem = async (item, quantity, expDate, mfgDate, classification) => {
+  const addItem = async (item, quantity = 1, expDate = '', mfgDate = '', classification = '') => {
     const docRef = doc(collection(firestore, 'Inventory'), item);
     const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      const { Quantity } = docSnap.data();
-      await setDoc(docRef, { Quantity: Quantity + quantity, EXP: expDate, MFG: mfgDate, Classification: classification });
-    } else {
-      await setDoc(docRef, { Quantity: quantity, EXP: expDate, MFG: mfgDate, Classification: classification });
-    }
+  
+    const data = {
+      Quantity: docSnap.exists() ? docSnap.data().Quantity + quantity : quantity,
+    };
+  
+    if (expDate) data.EXP = expDate;
+    if (mfgDate) data.MFG = mfgDate;
+    if (classification) data.Classification = classification;
+  
+    await setDoc(docRef, data, { merge: true });
     await updateInventory();
   };
+  
 
   const removeItem = async (item) => {
     const docRef = doc(collection(firestore, 'Inventory'), item);
